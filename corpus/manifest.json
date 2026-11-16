@@ -1,0 +1,14 @@
+[
+  {
+    "file": "treasure-island.txt",
+    "characters": 362877,
+    "raw_sha256": "6c37a18a886b4c12eaf4e5ff301813186616c7ee899c268db94eddd433027da7",
+    "clean_sha256": "7d9e0edadc71314a8efd2157da55ea0a51d208a149e3326bc90c2b8894083fcd"
+  },
+  {
+    "file": "alice.txt",
+    "characters": 143389,
+    "raw_sha256": "0f9ea0b148d553177962a25edd2f56d36342c22576a3253a127b4fbeffa5687d",
+    "clean_sha256": "af8e2baf01d81806d62a1f2ffb0393600cc6fd0d06f708e85ccb5bdf1393d513"
+  }
+]

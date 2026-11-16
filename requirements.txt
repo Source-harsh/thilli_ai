@@ -1,4 +1,6 @@
 # Test tooling only; the application has no third-party runtime dependencies.
+torch==2.9.1
+numpy==2.3.5
 pytest==9.2.0
 colorama==0.4.6; sys_platform == "win32"
 iniconfig==2.3.1
