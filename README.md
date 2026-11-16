@@ -37,7 +37,42 @@ python -m pip install -r requirements.txt
 python -m pytest -q
 ```
 
-The generator itself uses only the Python standard library. `httpx` supports the starter's optional, unused `app.llm` helper. `.env` is unnecessary for n-gram generation.
+The generator and evaluation use only the Python standard library. `requirements.txt` pins the test runner and its dependencies. No `.env` configuration is needed. The implementation was validated locally on Python 3.13.2; GitHub Actions runs Python 3.12.
+
+## Results and baseline comparison
+
+Reproduce the saved results from the repository root:
+
+```powershell
+python -m app.evaluate --output results/evaluation.json
+```
+
+The script shuffles the 50 utterances with seed 42, trains on 40, and evaluates on the remaining 10. Both models use additive smoothing with alpha 0.0001. Each predicts the most probable next token from the true preceding tokens (teacher forcing); ties use alphabetical token order. The unigram baseline ignores context. The trigram uses up to two preceding tokens with suffix backoff.
+
+| Model | Correct / test tokens | Next-token accuracy |
+| --- | --- | --- |
+| Unigram baseline | 13 / 138 | 9.42% |
+| Trigram with backoff | 42 / 138 | 30.43% |
+
+Tokens include punctuation and utterance-end markers. Only 74.64% of test tokens occur in the training vocabulary; unseen tokens count as incorrect. The split is by utterance, not by character or phrase family, so related phrases can appear in both sets. This single small synthetic split measures local prediction, not human-rated coherence or performance on real game scripts.
+
+The [saved evaluation](results/evaluation.json) includes actual outputs with prompts, seeds, and model settings. For example:
+
+```text
+Prompt: Even if | character: AnimeHero | order: 4 | seed: 7
+Even if my sword breaks, my courage will still have an edge.
+
+Prompt: The demon king | character: AnimeHero | order: 4 | seed: 2
+The demon king stole the sun. fine, we will become the dawn.
+```
+
+These examples train on all AnimeHero lines and are separate from held-out scoring. The model can copy training phrases, produce duplicate alternatives, combine phrases awkwardly, and leave sentence-internal capitalization lowercase. Higher prediction accuracy does not establish originality or story consistency.
+
+## Data provenance and project origin
+
+The complete dataset is versioned in [app/dialogues.txt](app/dialogues.txt): 10 Guard, 10 Merchant, 10 Mage, and 20 AnimeHero utterances. These are synthetic English examples authored with AI assistance for this project, not collected from published games or anime transcripts. AnimeHero uses general adventure themes rather than quotations from a specific series. There was no scraping or external dataset download. Preprocessing removes speaker labels, lowercases text, keeps word-internal apostrophes, and splits punctuation into tokens; blank lines and comments are skipped.
+
+This project began from the [askThili project scaffold](https://ask.thili.ai/b/ymqyzkmhwt). The initial scaffold supplied milestone instructions, CLI plumbing, CI, and generic helpers. The implemented n-gram model, corpus, generation CLI, evaluation, and project-specific tests were developed with AI assistance. Unused API and storage helpers and their configuration have been removed. The scaffold origin and AI assistance are disclosed here rather than presented as entirely independent work.
 
 ## Completed milestones
 
