@@ -1,4 +1,6 @@
-﻿# Game Dialogue Assistant
+﻿[![Built with askThili](https://ask.thili.ai/api/v1/public/projects/ymqyzkmhwt/badge.svg)](https://ask.thili.ai/b/ymqyzkmhwt)
+
+# Game Dialogue Assistant
 
 An offline Python CLI for prototyping NPC dialogue using a smoothed n-gram language model. No API keys, model downloads, or external service required.
 
