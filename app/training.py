@@ -37,21 +37,43 @@ def score(model, batches):
 
 def train(corpus='corpus', output='checkpoints/demo.pt', steps=3000, seed=42,
           batch_size=16, context=128, embedding_dim=128, layers=2, vocab_size=384,
-          eval_interval=250, threads=4):
+          eval_interval=250, threads=4, init_from=None, learning_rate=0.001):
     if min(steps, batch_size, context, eval_interval, threads) <= 0:
         raise ValueError('Training counts must be positive')
+    if not math.isfinite(learning_rate) or learning_rate <= 0:
+        raise ValueError('Learning rate must be finite and positive')
     torch.set_num_threads(threads)
     torch.manual_seed(seed)
     started = time.monotonic()
     training_text, validation_text = split_corpus(corpus)
-    print('Training byte-pair tokenizer...', flush=True)
-    tokenizer = BytePairTokenizer.train(training_text, vocab_size)
+    parent_step = 0
+    parent_hash = None
+    if init_from:
+        source = Path(init_from)
+        if source.resolve() == Path(output).resolve():
+            raise ValueError('Use a different output path to preserve the starting checkpoint')
+        previous = json.loads(source.with_suffix('.json').read_text(encoding='utf-8'))
+        for name, text in [('training', training_text), ('validation', validation_text)]:
+            if previous[f'{name}_sha256'] != hashlib.sha256(text.encode()).hexdigest():
+                raise ValueError('Starting checkpoint corpus does not match this corpus split')
+        parent_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+        if previous['checkpoint_sha256'] != parent_hash:
+            raise ValueError('Starting checkpoint hash does not match its training report')
+        model, tokenizer = load_checkpoint(source)
+        saved = torch.load(source, map_location='cpu', weights_only=True)
+        parent_step = saved.get('total_steps', saved['step'])
+        config = model.config
+        context = config.context_length
+        print(f'Continuing weights from step {parent_step}; starting a new optimizer.', flush=True)
+    else:
+        print('Training byte-pair tokenizer...', flush=True)
+        tokenizer = BytePairTokenizer.train(training_text, vocab_size)
+        config = GPTConfig(vocab_size=tokenizer.vocab_size, context_length=context,
+                           embedding_dim=embedding_dim, layers=layers)
+        model = GPT(config)
     train_ids = torch.tensor(tokenizer.encode(training_text), dtype=torch.long)
     val_ids = torch.tensor(tokenizer.encode(validation_text), dtype=torch.long)
-    config = GPTConfig(vocab_size=tokenizer.vocab_size, context_length=context,
-                       embedding_dim=embedding_dim, layers=layers)
-    model = GPT(config)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     train_rng = torch.Generator().manual_seed(seed)
     eval_rng = torch.Generator().manual_seed(seed + 1)
     validation_batches = [batch(val_ids, batch_size, context, eval_rng) for _ in range(10)]
@@ -72,11 +94,16 @@ def train(corpus='corpus', output='checkpoints/demo.pt', steps=3000, seed=42,
             if val_loss < best_loss:
                 best_loss = val_loss
                 checkpoint = model.checkpoint()
-                checkpoint.update({'merges': tokenizer.merges, 'step': step, 'seed': seed})
+                checkpoint.update({'merges': tokenizer.merges, 'step': step, 'seed': seed,
+                                   'total_steps': parent_step + step})
                 torch.save(checkpoint, output)
         if step == steps:
             break
         model.train()
+        # Cosine decay prevents a fixed high step size from disrupting learned phrases.
+        rate = learning_rate * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * step / steps)))
+        for group in optimizer.param_groups:
+            group['lr'] = rate
         x, y = batch(train_ids, batch_size, context, train_rng)
         optimizer.zero_grad(set_to_none=True)
         loss = model(x, y)[1]
@@ -84,7 +111,9 @@ def train(corpus='corpus', output='checkpoints/demo.pt', steps=3000, seed=42,
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
     report = {'seed': seed, 'steps': steps, 'config': asdict(config),
-              'batch_size': batch_size, 'learning_rate': 0.001, 'threads': threads,
+              'batch_size': batch_size, 'learning_rate': learning_rate, 'schedule': 'cosine to 10%',
+              'parent_steps': parent_step, 'total_steps': parent_step + steps,
+              'parent_checkpoint_sha256': parent_hash, 'threads': threads,
               'parameters': sum(p.numel() for p in model.parameters()),
               'torch_version': str(torch.__version__), 'train_tokens': len(train_ids),
               'validation_tokens': len(val_ids), 'validation_scored_tokens': 10 * batch_size * context,

@@ -48,3 +48,16 @@ def test_model_rejects_invalid_shapes_and_architecture():
         GPTConfig(embedding_dim=15, heads=4)
     with pytest.raises(ValueError):
         tiny_model()(torch.ones((1, 17), dtype=torch.long))
+
+
+@pytest.mark.parametrize('values', [(4.0, 3.0), (-1.0, -1.5)])
+def test_nucleus_and_repetition_controls_choose_expected_token(monkeypatch, values):
+    model = tiny_model()
+    def fixed_logits(ids, targets=None):
+        logits = torch.full((ids.size(0), ids.size(1), 32), -100.0)
+        logits[:, :, 0], logits[:, :, 1] = values
+        return logits, None
+    monkeypatch.setattr(model, 'forward', fixed_logits)
+    prompt = torch.tensor([[0]])
+    assert model.generate(prompt, 1, top_p=0.01)[0, -1].item() == 0
+    assert model.generate(prompt, 1, top_p=0.01, repetition_penalty=2)[0, -1].item() == 1

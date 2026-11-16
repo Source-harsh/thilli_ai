@@ -87,16 +87,35 @@ class GPT(nn.Module):
         return logits, loss
 
     @torch.no_grad()
-    def generate(self, ids, max_new_tokens=120, temperature=0.8, top_k=40, seed=42):
+    def generate(self, ids, max_new_tokens=120, temperature=0.8, top_k=40, seed=42,
+                 top_p=1.0, repetition_penalty=1.0):
         if max_new_tokens < 1 or not math.isfinite(temperature) or temperature <= 0 or top_k < 1:
             raise ValueError('Token count, temperature, and top-k must be positive and finite')
+        if not math.isfinite(top_p) or not 0 < top_p <= 1:
+            raise ValueError('top-p must be between zero (exclusive) and one')
+        if not math.isfinite(repetition_penalty) or repetition_penalty < 1:
+            raise ValueError('Repetition penalty must be finite and at least one')
         self.eval()
         generator = torch.Generator(device=ids.device).manual_seed(seed)
         for _ in range(max_new_tokens):
             logits, _ = self(ids[:, -self.config.context_length:])
-            logits = logits[:, -1, :] / temperature
+            logits = logits[:, -1, :].clone()
+            if repetition_penalty != 1:
+                for row in range(ids.size(0)):
+                    seen = ids[row, -self.config.context_length:].unique()
+                    values = logits[row, seen]
+                    logits[row, seen] = torch.where(values < 0, values * repetition_penalty, values / repetition_penalty)
+            logits = logits / temperature
             cutoff = torch.topk(logits, min(top_k, logits.size(-1))).values[:, -1:]
             logits = logits.masked_fill(logits < cutoff, float('-inf'))
+            if top_p < 1:
+                sorted_logits, indices = logits.sort(descending=True, dim=-1)
+                cumulative = F.softmax(sorted_logits, dim=-1).cumsum(dim=-1)
+                remove = cumulative > top_p
+                remove[:, 1:] = remove[:, :-1].clone()
+                remove[:, 0] = False
+                mask = torch.zeros_like(remove).scatter(1, indices, remove)
+                logits = logits.masked_fill(mask, float('-inf'))
             next_id = torch.multinomial(F.softmax(logits, dim=-1), 1, generator=generator)
             ids = torch.cat((ids, next_id), dim=1)
         return ids

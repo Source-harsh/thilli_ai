@@ -15,18 +15,23 @@ def main(argv=None):
     training.add_argument('--steps', type=int, default=3000)
     training.add_argument('--seed', type=int, default=42)
     training.add_argument('--threads', type=int, default=4)
+    training.add_argument('--init-from', type=Path, help='continue a checkpoint with a fresh optimizer')
+    training.add_argument('--learning-rate', type=float, default=0.001)
     generation = commands.add_parser('generate', help='continue a story using a trained checkpoint')
     generation.add_argument('prompt')
-    generation.add_argument('--checkpoint', type=Path, default=Path('checkpoints/demo.pt'))
+    generation.add_argument('--checkpoint', type=Path, default=Path('checkpoints/improved.pt'))
     generation.add_argument('--tokens', type=int, default=120)
     generation.add_argument('--temperature', type=float, default=0.8)
     generation.add_argument('--top-k', type=int, default=40)
+    generation.add_argument('--top-p', type=float, default=0.9, help='nucleus probability mass, 0 < p <= 1')
+    generation.add_argument('--repetition-penalty', type=float, default=1.05)
     generation.add_argument('--seed', type=int, default=42)
     generation.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
     try:
         if args.command == 'train':
-            report = train(args.corpus, args.output, args.steps, args.seed, threads=args.threads)
+            report = train(args.corpus, args.output, args.steps, args.seed, threads=args.threads,
+                           init_from=args.init_from, learning_rate=args.learning_rate)
             print(json.dumps({'best_validation_loss': report['best_validation_loss']}))
         else:
             if not args.prompt.strip():
@@ -34,7 +39,8 @@ def main(argv=None):
             torch.set_num_threads(4)
             model, tokenizer = load_checkpoint(args.checkpoint)
             ids = tokenizer.encode(args.prompt)
-            generated = model.generate(torch.tensor([ids]), args.tokens, args.temperature, args.top_k, args.seed)
+            generated = model.generate(torch.tensor([ids]), args.tokens, args.temperature, args.top_k, args.seed,
+                                       args.top_p, args.repetition_penalty)
             # Decode only the new tokens so the exact supplied prompt is preserved.
             output = args.prompt + tokenizer.decode(generated[0, len(ids):].tolist())
             if args.output:

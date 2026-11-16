@@ -16,9 +16,33 @@ python -m app.cli generate "The captain opened the map and" --tokens 100 --seed 
 python -m app.cli generate "Alice stepped through the little door." --temperature 0.7 --top-k 30 --output story.txt
 ```
 
-On macOS/Linux, activate with `source .venv/bin/activate`. A small trained checkpoint is included at `checkpoints/demo.pt`, so no training or network access is required after installing dependencies. Run commands from the repository root. Use `python -m app.cli --help` or `python -m app.cli generate --help` for options.
+On macOS/Linux, activate with `source .venv/bin/activate`. A small trained checkpoint is included at `checkpoints/improved.pt` and is selected by default, so no training or network access is required after installing dependencies. The original checkpoint remains at `checkpoints/demo.pt` for comparison. Run commands from the repository root. Use `python -m app.cli --help` or `python -m app.cli generate --help` for options.
 
 `--tokens` counts newly generated BPE tokens, not words. The exact starting phrase is preserved, and generation appends new tokens. `--temperature` adjusts randomness; lower values are more conservative. `--top-k` restricts each choice to the most likely tokens. `--seed` repeats a sampling run on the same runtime and checkpoint. Prompts longer than the context window are accepted; only their latest 128 tokens condition the next prediction.
+
+`--top-p` adds nucleus sampling (default 0.9), keeping a set of likely tokens whose cumulative probability reaches the chosen threshold. `--repetition-penalty` discourages recently used tokens (default 1.05). Use `--top-p 1 --repetition-penalty 1` to disable these controls. They adjust sampling; they do not guarantee correct grammar.
+
+## Improved checkpoint
+
+The default checkpoint retains 750 additional training updates after the original 3,000, for 3,750 total. Training continued from the original weights with a new AdamW optimizer and learning rate 0.0003, decaying on a cosine schedule. The longer planned run was stopped at the user's request; the best saved checkpoint was retained. [Its report](checkpoints/improved.json) records the actual retained step, parent checkpoint hash, corpus hashes, and schedule.
+
+Reproduce the before/after comparison with identical held-out targets and unchanged sampling settings:
+
+```powershell
+python -m app.compare
+```
+
+[results/improvement.json](results/improvement.json) records both models' measured losses, perplexities, checkpoint hashes, and unedited outputs for the same prompts. The comparison disables the new sampling controls to isolate the effect of further training. The original results below are retained as a baseline. This remains a small educational model with limited grammatical and narrative coherence.
+
+On the same evaluation targets, further training reduces cross-entropy from 2.5582 to 2.4933 nats/token and lowers perplexity by **6.28%**.
+
+Continue training without overwriting your starting checkpoint:
+
+```powershell
+python -m app.cli train --init-from checkpoints/improved.pt --output checkpoints/next.pt --steps 2000 --learning-rate 0.0002
+```
+
+This starts a fresh optimizer rather than restoring an exact interrupted optimizer state. It requires the matching training report and rejects a changed corpus or a checkpoint hash mismatch. New training uses cosine learning-rate decay; the original baseline used a fixed learning rate.
 
 ## Train from scratch
 
@@ -41,7 +65,7 @@ python -m pytest -q
 
 See [results/evaluation.json](results/evaluation.json) for measured held-out cross-entropy, perplexity, and unedited story samples. The [training report](checkpoints/demo.json) includes the learning curve, architecture, seed, and checkpoint SHA-256. Evaluation compares the GPT with a uniform token predictor and a smoothed unigram predictor fitted only on training tokens. All models score the same held-out BPE targets; lower loss and perplexity are better. Perplexity measures token prediction, not literary quality.
 
-The included checkpoint was trained for 3,000 steps with seed 42 and scored on 20,480 held-out token positions:
+The original checkpoint was trained for 3,000 steps with seed 42 and scored on 20,480 held-out token positions:
 
 | Predictor | Cross-entropy (nats/token) | Perplexity |
 | --- | --- | --- |
