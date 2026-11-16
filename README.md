@@ -94,4 +94,19 @@ This project began with the [askThili Adventure Story Weaver scaffold](https://a
 - [x] Implement autoregressive story continuation with temperature and top-k sampling.
 - [x] Provide a CLI accepting prompts and saving generated stories.
 
+### Implementation evidence
+
+This repository's default branch is `Adventure-of-story-weaver`. It contains the transformer assignment; `main` preserves the older n-gram assignment. Submit the root repository URL so GitHub opens this assignment by default.
+
+| Assignment milestone | Implementation | Verification |
+| --- | --- | --- |
+| Public-domain narrative corpus | [Corpus and source attribution](corpus/SOURCES.md), [`clean_text`](app/prepare.py) | [Cleaning and exact corpus hash tests](tests/test_tokenizer.py) |
+| Byte-pair tokenizer and embeddings | [`BytePairTokenizer`](app/tokenizer.py), `GPT.token_embedding` and `GPT.position_embedding` in [model.py](app/model.py) | Unicode round trip, compression, serialization, and embedding-gradient tests |
+| Causal attention and transformer blocks | `CausalSelfAttention` and `TransformerBlock` in [model.py](app/model.py) | [Future-token masking test](tests/test_model.py) proves earlier predictions cannot see later tokens |
+| Train a custom GPT | [`train`](app/training.py): AdamW, cross-entropy, backpropagation, clipping, and validation checkpoint selection | [Original 3,000-step training log](checkpoints/demo.json), [continued-training checkpoint report](checkpoints/improved.json), and [training integration test](tests/test_training_cli.py) |
+| Autoregressive continuation | `GPT.generate` in [model.py](app/model.py), with temperature, top-k, nucleus sampling, and repetition controls | [Unedited outputs and before/after measurements](results/improvement.json), seeded sampling and context-window tests |
+| Prompt-driven CLI | [`train` and `generate` commands](app/cli.py) | [CLI checkpoint, saved output, and invalid-input tests](tests/test_training_cli.py) |
+
+The neural pipeline is implemented rather than represented by milestone stubs. Output quality remains limited: the saved samples show that learned token patterns do not yet yield consistently coherent stories. The baseline and before/after results quantify token prediction, not successful completion of a human literary-quality assessment.
+
 Tests cover tokenizer compression and Unicode round trips, corpus cleaning, future-token masking, learning through backpropagation, seeded generation, context cropping, checkpoint round trips, a tiny end-to-end training run, CLI file output, and invalid inputs.
