@@ -1,4 +1,5 @@
 import torch
+import pytest
 from app.model import GPT, GPTConfig
 
 
@@ -40,3 +41,10 @@ def test_generation_is_seeded_and_handles_long_prompt():
     assert output.shape == (1, 29)
     assert torch.equal(output[:, :24], prompt)
     assert torch.equal(output, model.generate(prompt, max_new_tokens=5, seed=9))
+
+
+def test_model_rejects_invalid_shapes_and_architecture():
+    with pytest.raises(ValueError):
+        GPTConfig(embedding_dim=15, heads=4)
+    with pytest.raises(ValueError):
+        tiny_model()(torch.ones((1, 17), dtype=torch.long))

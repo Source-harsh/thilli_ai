@@ -24,7 +24,7 @@ def main():
     for name in ['treasure-island', 'alice']:
         raw = (args.directory / f'{name}.raw.txt').read_bytes()
         clean = clean_text(raw.decode('utf-8-sig'))
-        (args.directory / f'{name}.txt').write_text(clean, encoding='utf-8')
+        (args.directory / f'{name}.txt').write_text(clean, encoding='utf-8', newline='\n')
         metadata.append({'file': f'{name}.txt', 'characters': len(clean),
                          'raw_sha256': hashlib.sha256(raw).hexdigest(),
                          'clean_sha256': hashlib.sha256(clean.encode('utf-8')).hexdigest()})

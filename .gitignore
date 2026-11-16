@@ -7,9 +7,5 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# Local data
-data/
-*.db
-
 # Intermediate training artifacts; the small published demo checkpoint is tracked.
 checkpoints/*.tmp

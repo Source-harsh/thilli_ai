@@ -1,0 +1,8 @@
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+corpus/*.txt text eol=lf
+# Preserve exact source downloads so the recorded raw hashes remain portable.
+corpus/*.raw.txt -text -whitespace
+*.pt binary

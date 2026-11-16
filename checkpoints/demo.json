@@ -1,0 +1,95 @@
+{
+  "seed": 42,
+  "steps": 3000,
+  "config": {
+    "vocab_size": 384,
+    "context_length": 128,
+    "embedding_dim": 128,
+    "heads": 4,
+    "layers": 2,
+    "dropout": 0.1
+  },
+  "batch_size": 16,
+  "learning_rate": 0.001,
+  "threads": 4,
+  "parameters": 511488,
+  "torch_version": "2.9.1+cpu",
+  "train_tokens": 251048,
+  "validation_tokens": 27917,
+  "validation_scored_tokens": 20480,
+  "unigram_validation_loss": 4.833855199813843,
+  "uniform_validation_loss": 5.950642552587727,
+  "best_validation_loss": 2.5581539154052733,
+  "best_validation_perplexity": 12.911958731734558,
+  "elapsed_seconds": 545.99,
+  "history": [
+    {
+      "step": 0,
+      "train_loss": 5.983991718292236,
+      "validation_loss": 5.9828901290893555
+    },
+    {
+      "step": 250,
+      "train_loss": 3.4894041061401366,
+      "validation_loss": 3.5592535018920897
+    },
+    {
+      "step": 500,
+      "train_loss": 3.30976881980896,
+      "validation_loss": 3.4090326547622682
+    },
+    {
+      "step": 750,
+      "train_loss": 2.9324273586273195,
+      "validation_loss": 3.0847698926925657
+    },
+    {
+      "step": 1000,
+      "train_loss": 2.7000307559967043,
+      "validation_loss": 2.8956543684005736
+    },
+    {
+      "step": 1250,
+      "train_loss": 2.5572630882263185,
+      "validation_loss": 2.768970012664795
+    },
+    {
+      "step": 1500,
+      "train_loss": 2.462034296989441,
+      "validation_loss": 2.7130380868911743
+    },
+    {
+      "step": 1750,
+      "train_loss": 2.3785696506500242,
+      "validation_loss": 2.6687445878982543
+    },
+    {
+      "step": 2000,
+      "train_loss": 2.3022385835647583,
+      "validation_loss": 2.6259520292282104
+    },
+    {
+      "step": 2250,
+      "train_loss": 2.250107216835022,
+      "validation_loss": 2.6026902198791504
+    },
+    {
+      "step": 2500,
+      "train_loss": 2.216694474220276,
+      "validation_loss": 2.585832715034485
+    },
+    {
+      "step": 2750,
+      "train_loss": 2.172603440284729,
+      "validation_loss": 2.5701639890670775
+    },
+    {
+      "step": 3000,
+      "train_loss": 2.1295846462249757,
+      "validation_loss": 2.5581539154052733
+    }
+  ],
+  "training_sha256": "d57766f420808cb68589bd0a68b9e961397b297a990ce946d3120ba39b65a9f0",
+  "validation_sha256": "4abf87d7a22543c175450d105213684508ae855200173d71b8dcc6490180f124",
+  "checkpoint_sha256": "92514a1ef7e423e2d39be351f8838e003c46e0412d93e39c124c78f2a2f15624"
+}

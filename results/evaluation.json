@@ -1,0 +1,38 @@
+{
+  "checkpoint": "checkpoints/demo.pt",
+  "checkpoint_sha256": "92514a1ef7e423e2d39be351f8838e003c46e0412d93e39c124c78f2a2f15624",
+  "evaluation_seed": 43,
+  "validation_scored_tokens": 20480,
+  "gpt_loss": 2.5581539154052733,
+  "gpt_perplexity": 12.911958731734558,
+  "unigram_loss": 4.833855199813843,
+  "unigram_perplexity": 125.6946056019107,
+  "uniform_loss": 5.950642552587727,
+  "uniform_perplexity": 384,
+  "samples": [
+    {
+      "prompt": "The captain opened the map and",
+      "seed": 42,
+      "temperature": 0.7,
+      "top_k": 30,
+      "new_tokens": 100,
+      "output": "The captain opened the map and the fife and day and strong the captain's fifty was provided ashore into the house.\n\nThe monest of the companion was still began to say ashore to salt.\n\nI had soon one of the sea-ce; the fir"
+    },
+    {
+      "prompt": "Alice stepped through the little door.",
+      "seed": 42,
+      "temperature": 0.7,
+      "top_k": 30,
+      "new_tokens": 100,
+      "output": "Alice stepped through the little door.'\n\n'That's very little before me well,' said the Gryphon washed, we were the crippless so loud of it at this. 'Now, I did you know,\" said the others and said one of it!' said Alice of"
+    },
+    {
+      "prompt": "Beyond the dark forest, a hidden castle",
+      "seed": 42,
+      "temperature": 0.7,
+      "top_k": 30,
+      "new_tokens": 100,
+      "output": "Beyond the dark forest, a hidden castle, and a boat, which was still she was as she was liked: 'em do.' Alice seen only made out talk one of the Hatter; this time of them to be sure.'\n\n'You're so one of yet!' said the Do"
+    }
+  ]
+}
